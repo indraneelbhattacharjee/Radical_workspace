@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+radicalvenv/
+*.env
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg-info/
+
+# Distribution / packaging
+.Python
+*.whl
+
+# Streamlit
+.streamlit/
+*.streamlit
+
+# Logs
+*.log
+*.out
+*.err
+logs/
+
+# Virtual Environment
+.env/
+.venv/
+env/
+venv/
+ENV/
+
+# IDEs
+.idea/
+.vscode/
+*.iml

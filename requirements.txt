@@ -1,0 +1,1 @@
+pip install google-cloud-aiplatform SpeechRecognition pyaudio pyttsx3 openmeteo-requests sounddevice
