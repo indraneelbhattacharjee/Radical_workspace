@@ -1,41 +1,70 @@
 import streamlit as st
 import vertexai
-from vertexai.preview.generative_models import GenerativeModel, ChatSession
+from vertexai.generative_models import GenerativeModel, ChatSession, SafetySetting
 
-st.title("Gemini Flights!")
+# Streamlit app title
+st.title("Sparks!")
 
 # Initialize Streamlit session state for messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Initialize Vertex AI
-vertexai.init(project="geminiexplorer-436616", location="us-central1")  # Set your project and location
+# Initialize Vertex AI with your project and location
+vertexai.init(project="geminiexplorer-436616", location="us-central1")
 
-# Try to load the "text-bison" model
+# Define the generation configuration
+generation_config = {
+    "max_output_tokens": 8192,
+    "temperature": 1,
+    "top_p": 0.95,
+}
+
+# Define safety settings
+safety_settings = [
+    SafetySetting(
+        category=SafetySetting.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=SafetySetting.HarmBlockThreshold.OFF
+    ),
+    SafetySetting(
+        category=SafetySetting.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=SafetySetting.HarmBlockThreshold.OFF
+    ),
+    SafetySetting(
+        category=SafetySetting.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=SafetySetting.HarmBlockThreshold.OFF
+    ),
+    SafetySetting(
+        category=SafetySetting.HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=SafetySetting.HarmBlockThreshold.OFF
+    ),
+]
+
+# Try to load the Gemini model
 model = None
-chat = None
-
 try:
-    model = GenerativeModel(model_name="text-bison")
-    chat = ChatSession(model=model)
+    model = GenerativeModel("gemini-1.5-flash-002")
 except Exception as e:
     st.error(f"Model loading failed: {e}")
 
 # Function to send query to the model
-def llm_function(chat: ChatSession, query):
+def llm_function(model: GenerativeModel, query):
     try:
-        if chat:
-            response = chat.send_message(query)
-            output = response.text
+        if model:
+            responses = model.generate_content(
+                [query],
+                generation_config=generation_config,
+                safety_settings=safety_settings,
+                stream=True
+            )
+            output = ""
+            for response in responses:
+                output += response.text
             st.session_state.messages.append({"role": "user", "content": query})
             st.session_state.messages.append({"role": "assistant", "content": output})
         else:
-            st.error("Chat session is not initialized.")
+            st.error("Model is not initialized.")
     except Exception as e:
-        if "429" in str(e):
-            st.error("Quota exceeded. Please wait or request a quota increase from Google Cloud.")
-        else:
-            st.error(f"Error in chat session: {e}")
+        st.error(f"Error in content generation: {e}")
 
 # Capture user name
 user_name = st.text_input("What's your name?")
@@ -43,7 +72,7 @@ user_name = st.text_input("What's your name?")
 # Check if message history is empty, send personalized initial message
 if len(st.session_state.messages) == 0 and user_name:
     initial_prompt = f"Hello {user_name}! I’m ReX, your assistant powered by Google Gemini! 🎉 How can I assist you today?"
-    llm_function(chat, initial_prompt)
+    llm_function(model, initial_prompt)
 
 # Display previous messages
 for message in st.session_state.messages:
@@ -55,10 +84,10 @@ for message in st.session_state.messages:
 # Get user input
 query = st.chat_input("Ask about Gemini Flights!")
 
-# Process the query only if chat session is initialized
+# Process the query only if the model is initialized
 if query:
     st.chat_message("user").markdown(query)
-    llm_function(chat, query)
+    llm_function(model, query)
 
     # Display the assistant's response
     if st.session_state.messages:
